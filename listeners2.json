@@ -9,7 +9,7 @@
             "user_agent": "AppleCoreMedia/1.0.0.19H386 (iPhone; U; CPU OS 15_8_3 like Mac OS X; ru_ru)",
             "duration": 40,
             "is_active": true,
-            "quality_level": null,
+            "quality_level": "aac_hifi",
             "geo": {
                 "status": "success",
                 "country": "Russia",
@@ -32,7 +32,7 @@
             "user_agent": "AppleCoreMedia/1.0.0.19H386 (iPhone; U; CPU OS 15_8_3 like Mac OS X; ru_ru)",
             "duration": 40,
             "is_active": true,
-            "quality_level": null,
+            "quality_level": "aac_hifi",
             "geo": {
                 "status": "success",
                 "country": "Russia",

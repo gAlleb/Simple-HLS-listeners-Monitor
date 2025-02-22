@@ -14,7 +14,7 @@ Simple python script to monitor HLS listeners connected to your HLS stream. Dock
       1. findip.net (token needed) (`listeners.json`)
       2. ip-api.com (no token but limit is 40 IP per minute) (`listeners2.json`)
   - Geo data is cached for session.
-- Shows data for streams that are indicated in `STREAM_NAMES: "stream1,stream2"` env variiable in `docker-compose.yml`
+- Shows data for any number os streams that are indicated in `STREAM_NAMES: "stream1,stream2"` env variiable in `docker-compose.yml`
 - Can be used without docker (look at dependencies inside Dockerfile)
 
 ## Important.

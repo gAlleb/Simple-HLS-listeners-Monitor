@@ -18,15 +18,15 @@ Simple python script to monitor HLS listeners connected to your HLS stream. Dock
 - Can be used without docker (look at dependencies inside Dockerfile)
 
 ## Important
-For script to work the following structure for you HLS streams is needed (Can be changed in regex in script itself):
+For script to work the following structure for you HLS streams is needed as in `STREAM_NAMES: "stream1,stream2"` (Can be changed in regex in script itself):
 
-https://your-domain.com/STREAM_NAME_1/anyname.m3u8
+https://your-domain.com/stream1/anyname.m3u8
 
-https://your-domain.com/STREAM_NAME_1/anyname.ts
+https://your-domain.com/stream1/anyname.ts
 
-https://your-domain.com/STREAM_NAME_2/anyname.m3u8
+https://your-domain.com/stream2/anyname.m3u8
 
-https://your-domain.com/STREAM_NAME_2/anyname.ts
+https://your-domain.com/stream2/anyname.ts
 
 ## Example:
 

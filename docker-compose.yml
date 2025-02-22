@@ -1,0 +1,21 @@
+services:
+  hls_monitor:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    environment:
+      TZ: "Europe/London"
+      STREAM_NAMES: "stream1,stream2"
+    volumes:
+      - /var/log/nginx:/var/log/nginx:ro
+      - ./:/app
+    restart: always
+    secrets:
+      - source: api_username
+      - source: api_password
+
+secrets:
+  api_username:
+    file: ./api_username.txt
+  api_password:
+    file: ./api_password.txt

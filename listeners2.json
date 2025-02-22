@@ -1,0 +1,55 @@
+{
+    "total_listeners": {
+        "stream1": 2,
+        "stream2": 0
+    },
+    "stream1": [
+        {
+            "ip_address": "89.113.144.159",
+            "user_agent": "AppleCoreMedia/1.0.0.19H386 (iPhone; U; CPU OS 15_8_3 like Mac OS X; ru_ru)",
+            "duration": 40,
+            "is_active": true,
+            "quality_level": null,
+            "geo": {
+                "status": "success",
+                "country": "Russia",
+                "countryCode": "RU",
+                "region": "MOW",
+                "regionName": "Moscow",
+                "city": "Moscow",
+                "zip": "119415",
+                "lat": 55.7487,
+                "lon": 37.6187,
+                "timezone": "Europe/Moscow",
+                "isp": "SOVINTEL",
+                "org": "",
+                "as": "AS16345 PJSC \"Vimpelcom\"",
+                "query": "89.113.144.159"
+            }
+        },
+        {
+            "ip_address": "89.113.144.3",
+            "user_agent": "AppleCoreMedia/1.0.0.19H386 (iPhone; U; CPU OS 15_8_3 like Mac OS X; ru_ru)",
+            "duration": 40,
+            "is_active": true,
+            "quality_level": null,
+            "geo": {
+                "status": "success",
+                "country": "Russia",
+                "countryCode": "RU",
+                "region": "MOW",
+                "regionName": "Moscow",
+                "city": "Moscow",
+                "zip": "119415",
+                "lat": 55.7487,
+                "lon": 37.6187,
+                "timezone": "Europe/Moscow",
+                "isp": "SOVINTEL",
+                "org": "",
+                "as": "AS16345 PJSC \"Vimpelcom\"",
+                "query": "89.113.144.3"
+            }
+        }
+    ],
+    "stream2": []
+}

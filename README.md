@@ -3,7 +3,7 @@
 Simple python script to monitor HLS listeners connected to your HLS stream. Dockerized.
 
 - Checks nginx log `/var/log/nginx/doamin-access.log` file every 20 seconds with `activity_window` of 40 seconds.
-- If IP has been spotted withing this time - it outputs data both to file `listeners.json` and sends data to your desired API.
+- If IP has been spotted within this time - it outputs data both to file `listeners.json` and sends data to your desired API.
 - IP connection time is sumed up. When IP disconnects more than for 40 seconds - IP is forgotten.
 - What it shows:
   - IP

@@ -7,7 +7,7 @@ import os
 import requests
 from requests.auth import HTTPBasicAuth  # Import HTTPBasicAuth
 
-log_file = '/var/log/nginx/doamin-access.log'
+log_file = '/var/log/nginx/domain-access.log'
 activity_window = 40
 output_file = './listeners.json'
 refresh_interval = 20

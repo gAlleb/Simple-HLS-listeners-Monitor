@@ -7,7 +7,7 @@ import os
 import requests
 from requests.auth import HTTPBasicAuth  # Import HTTPBasicAuth
 
-log_file = '/var/log/nginx/domain-access.log'
+log_file = '/var/log/nginx/hls.access.log'
 activity_window = 40
 output_file = './listeners.json'
 refresh_interval = 20
@@ -21,10 +21,11 @@ ESCAPED_STREAM_NAMES = [re.escape(name) for name in STREAM_NAMES]
 # Construct the regex dynamically
 stream_names_regex = "|".join(ESCAPED_STREAM_NAMES)
 log_regex = re.compile(
-    r'(\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}) - - \[(.+?)\] "GET /('
+    r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) - - \[(.+?)\] "GET \/('
     + stream_names_regex
-    + r')/([^"]*?.ts|[^"]*?\.m3u8) HTTP/1.1" (\d+) (\d+) "([^"]*?)" "([^"]*?)"'
+    + r')\/([^"]*?\.ts|[^"]*?\.m3u8) HTTP\/1\.1" (\d+) (\d+) ?(?:([^"]*?) ")?("([^"]*?)") ("([^"]*?)")'
 )
+
 
 api_endpoint = 'http://endpoint:9999/hls_stat'
 
@@ -155,9 +156,14 @@ async def parse_log_file(log_file, connected_listeners, activity_window, log_reg
                 stream_name = match.group(3)
                 file_name = match.group(4)
                 status_code = int(match.group(5))
-                # bytes_transferred = int(match.group(6)) #not used
-                referer = match.group(7)
-                user_agent = match.group(8)
+                bytes_transferred = int(match.group(6))
+                # Determine if the optional field exists and extract referer/user_agent accordingly
+                if match.group(7) is not None: # optional field exists
+                    referer = match.group(8)
+                    user_agent = match.group(10)
+                else:
+                    referer = match.group(9)
+                    user_agent = match.group(11)
 
                 # Convert log timestamp to epoch time (seconds)
                 try:
@@ -167,7 +173,8 @@ async def parse_log_file(log_file, connected_listeners, activity_window, log_reg
                     continue  # Skip to the next line
 
                 # Check if the log entry is within the activity window
-                if log_time >= recent_activity_start_time and status_code == 200:  # Filter by time and status
+                # if log_time >= recent_activity_start_time and status_code == 200:  # Filter by time and status
+                if log_time >= recent_activity_start_time:  # Filter by time and status
                     listener_key = generate_listener_key(ip_address, user_agent)  # create listener key
                     quality_level = extract_quality_level(file_name)
                     if listener_key not in connected_listeners[stream_name]:
@@ -177,18 +184,22 @@ async def parse_log_file(log_file, connected_listeners, activity_window, log_reg
                         connected_listeners[stream_name][listener_key] = {
                             'ip_address': ip_address,  # add
                             'user_agent': user_agent,
+                            'connected_on': int(log_time),  # Store connection start time
+                            'connected_until': int(time.time()), # Store the current time as connected_until
                             'start_time': log_time,
                             'last_seen': log_time,
-                            'duration': 0,
+                            'connected_time': 0,
                             'previous_duration': 0,  # init previous duration
-                            'quality_level': quality_level if quality_level else None,
-                            'geo': geo_data,  # Store the geo data
+                            'mount_name': 'HLS: ' + quality_level if quality_level else None,
+                            'location': geo_data,  # Store the geo data
+                            'type': 'hls' #Added source indentifier
                         }
                     else:
                         # Existing listener - update last_seen
                         connected_listeners[stream_name][listener_key]['last_seen'] = log_time
+                        connected_listeners[stream_name][listener_key]['connected_until'] = int(time.time())
                         if quality_level:
-                            connected_listeners[stream_name][listener_key]['quality_level'] = quality_level
+                            connected_listeners[stream_name][listener_key]['mount_name'] = 'HLS: ' + quality_level
 
     except FileNotFoundError:
         print(f"Error: Log file not found: {log_file}")
@@ -197,18 +208,21 @@ async def parse_log_file(log_file, connected_listeners, activity_window, log_reg
 
 
 def update_listener_status(connected_listeners, activity_window, refresh_interval):
-    """Removes inactive listeners and updates connection durations."""
+    """Removes inactive HLS listeners and updates connection durations.
+       Icecast listeners are now handled directly in parse_icestats_xml."""
     current_time = time.time()
     recent_activity_start_time = current_time - activity_window
     for stream_name in connected_listeners:
         inactive_listeners = []
         for listener_key, listener_info in connected_listeners[stream_name].items():
-            if listener_info['last_seen'] < recent_activity_start_time:  # check if listener in last seen activity
-                inactive_listeners.append(listener_key)  # Mark for removal
-            else:  # update total duration
-                connected_listeners[stream_name][listener_key]['duration'] = listener_info['previous_duration'] + refresh_interval  # Update duration
-
-        # Remove inactive listeners
+            if listener_info['type'] == 'hls':  # Only check activity for HLS listeners
+                if listener_info['last_seen'] < recent_activity_start_time:  # check if listener in last seen activity
+                    inactive_listeners.append(listener_key)  # Mark for removal
+                else:  # update total duration
+                    current_time_int = int(current_time)  # convert in int
+                    listener_info['connected_until'] = current_time_int
+                    listener_info['connected_time'] = listener_info['connected_until'] - listener_info['connected_on']
+        # Remove inactive HLS listeners
         for listener_key in inactive_listeners:
             del connected_listeners[stream_name][listener_key]
 
@@ -221,19 +235,24 @@ def generate_output(connected_listeners, output_file):
         output_data[stream_name] = []
         output_data['total_listeners'][stream_name] = len(listeners)  # add
         for listener_key, listener_info in listeners.items():
-            output_data[stream_name].append({
+            listener_output = {
                 'ip_address': listener_info['ip_address'],  # Now we get it from listener info
                 'user_agent': listener_info['user_agent'],
-                'duration': round(listener_info['duration']),
+                'connected_on': listener_info['connected_on'], # Add connected_on
+                'connected_until': listener_info['connected_until'], # Add connected_until
+                'connected_time': round(listener_info['connected_time']),
                 'is_active': True,  # Always True at the time of output
-                'quality_level': listener_info['quality_level'],
-                'geo': listener_info['geo'],  # Include the geo data
-            })
+                'mount_name': listener_info['mount_name'],
+                'location': listener_info['location'],  # Include the location data,
+                'type': listener_info['type'] #Source
+            }
+
+            output_data[stream_name].append(listener_output)
 
     # After iteration - update previous_duration field
     for stream_name in connected_listeners:
         for listener_key, listener_info in connected_listeners[stream_name].items():
-            connected_listeners[stream_name][listener_key]['previous_duration'] = listener_info['duration']
+            connected_listeners[stream_name][listener_key]['previous_duration'] = listener_info['connected_time']
     return output_data
 
 
